@@ -35,10 +35,9 @@ fn main() -> Result<(), String> {
     let mut ball_x: f32 = 400.0;
     let mut ball_y: f32 = 300.0;
     let ball_size: f32 = 10.0;
-    let mut ball_dx: f32 = 10.0;
-    let mut ball_dy: f32 = -10.0;
-
-    let mut padel_rect: FRect;
+    let mut ball_dx: f32 = 1.0;
+    let mut ball_dy: f32 = -1.0;
+    let mut ball_speed = 10;
 
     let mut next_ball_x;
     let mut next_ball_y;
@@ -63,36 +62,48 @@ fn main() -> Result<(), String> {
                 } => {
                     padel_x += 10.0;
                 }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => {
+                    ball_speed += 1;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => {
+                    if ball_speed > 1 {
+                        ball_speed -= 1;
+                    }
+                }
                 _ => {}
             }
         }
+        let mut left_collision = false;
+        let mut right_collision = false;
+        let mut top_collision = false;
+        let mut bottom_collision = false;
+        let padel_rect = FRect::new(padel_x, padel_y, padel_width, padel_height);
 
         if ball_x < 0.0 {
-            ball_dx = 10.0;
+            ball_dx = 1.0;
         } else if ball_x > 800.0 {
-            ball_dx = -10.0;
+            ball_dx = -1.0;
         }
 
         if ball_y < 0.0 {
-            ball_dy = 10.0;
+            ball_dy = 1.0;
         } else if ball_y > 600.0 {
             break 'running;
         }
 
-        next_ball_y = ball_y + ball_dy;
-        next_ball_x = ball_x + ball_dx;
-
-        padel_rect = FRect::new(padel_x, padel_y, padel_width, padel_height);
+        next_ball_y = ball_y + ball_dy * ball_speed as f32;
+        next_ball_x = ball_x + ball_dx * ball_speed as f32;
 
         let intersection = padel_rect.intersect_line(
             FPoint::new(ball_x, ball_y),
             FPoint::new(next_ball_x, next_ball_y),
         );
-
-        let mut left_collision = false;
-        let mut right_collision = false;
-        let mut top_collision = false;
-        let mut bottom_collision = false;
 
         match intersection {
             Some((first, _second)) => {
@@ -102,14 +113,14 @@ fn main() -> Result<(), String> {
                 bottom_collision = (first.y - (padel_y + padel_height)).abs() < 0.05;
 
                 if left_collision || right_collision {
-                    ball_dx = if left_collision { -10.0 } else { 10.0 };
+                    ball_dx = if left_collision { -1.0 } else { 1.0 };
 
                     let x_diff = next_ball_x - first.x;
                     next_ball_x -= 2.0 * x_diff;
                 }
 
                 if top_collision || bottom_collision {
-                    ball_dy = if top_collision { -10.0 } else { 10.0 };
+                    ball_dy = if top_collision { -1.0 } else { 1.0 };
 
                     let y_diff = next_ball_y - first.y;
                     next_ball_y -= 2.0 * y_diff;
@@ -117,13 +128,15 @@ fn main() -> Result<(), String> {
             }
             None => {}
         }
+        ball_y = next_ball_y;
+        ball_x = next_ball_x;
 
         canvas.set_draw_color(clear_color);
         canvas.clear();
         canvas.set_draw_color(padel_color);
         canvas.fill_frect(FRect::new(
-            next_ball_x - ball_size,
-            next_ball_y - ball_size,
+            ball_x - ball_size,
+            ball_y - ball_size,
             ball_size * 2.0,
             ball_size * 2.0,
         ))?;
@@ -144,8 +157,6 @@ fn main() -> Result<(), String> {
         }
 
         canvas.present();
-        ball_y = next_ball_y;
-        ball_x = next_ball_x;
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
     }
 
