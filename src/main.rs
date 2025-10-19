@@ -112,16 +112,15 @@ fn main() -> Result<(), String> {
 
         for ball in &mut balls {
             if ball.location.x < 0.0 {
-                ball.direction.x = 1.0;
+                ball.direction.x *= -1.0;
             } else if ball.location.x > 800.0 {
-                ball.direction.x = -1.0;
+                ball.direction.x *= -1.0;
             }
 
             if ball.location.y < 0.0 {
-                ball.direction.y = 1.0;
+                ball.direction.y *= -1.0;
             } else if ball.location.y > 600.0 {
-                ball.direction.y = -1.0;
-                //break 'running;
+                ball.direction.y *= -1.0;
             }
 
             ball.make_next_location();
