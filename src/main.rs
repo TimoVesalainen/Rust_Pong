@@ -1,5 +1,6 @@
 extern crate sdl2;
 
+use rand::prelude::*;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -55,20 +56,30 @@ fn main() -> Result<(), String> {
     canvas.present();
     let mut event_pump = sdl_context.event_pump()?;
 
-    let mut padel_x: f32 = 400.0;
-    let padel_width: f32 = 50.0;
+    let mut padel_x: f32 = 0.0;
+    let padel_width: f32 = 800.0;
 
     let padel_y: f32 = 500.0;
     let padel_height: f32 = 10.0;
     let padel_color = Color::WHITE;
 
-    let mut ball = Ball {
-        location: FPoint::new(400.0, 300.0),
-        next_location: FPoint::new(400.0, 300.0),
-        direction: FPoint::new(1.0, -1.0),
-        size: 10.0,
-        speed: 10.0,
-    };
+    let mut balls: Vec<Ball> = Vec::new();
+
+    let mut rng = rand::rng();
+    for _i in 1..1000 {
+        let x = rng.random_range(50.0..750.0);
+        let y = rng.random_range(0.0..300.0);
+        let speed = rng.random_range(0.5..20.0);
+
+        let ball = Ball {
+            location: FPoint::new(x, y),
+            next_location: FPoint::new(x, y),
+            direction: FPoint::new(if rng.random_bool(0.5) { 1.0 } else { -1.0 }, -1.0),
+            size: 10.0,
+            speed: speed,
+        };
+        balls.push(ball);
+    }
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -90,20 +101,6 @@ fn main() -> Result<(), String> {
                 } => {
                     padel_x += 10.0;
                 }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Up),
-                    ..
-                } => {
-                    ball.speed += 1.0;
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Down),
-                    ..
-                } => {
-                    if ball.speed > 1.0 {
-                        ball.speed -= 1.0;
-                    }
-                }
                 _ => {}
             }
         }
@@ -113,51 +110,56 @@ fn main() -> Result<(), String> {
         let mut bottom_collision = false;
         let padel_rect = FRect::new(padel_x, padel_y, padel_width, padel_height);
 
-        if ball.location.x < 0.0 {
-            ball.direction.x = 1.0;
-        } else if ball.location.x > 800.0 {
-            ball.direction.x = -1.0;
-        }
-
-        if ball.location.y < 0.0 {
-            ball.direction.y = 1.0;
-        } else if ball.location.y > 600.0 {
-            break 'running;
-        }
-
-        ball.make_next_location();
-
-        let intersection = padel_rect.intersect_line(ball.location, ball.next_location);
-
-        match intersection {
-            Some((first, _second)) => {
-                left_collision = (first.x - padel_x).abs() < 0.05;
-                right_collision = (first.x - (padel_x + padel_width)).abs() < 0.05;
-                top_collision = (first.y - padel_y).abs() < 0.05;
-                bottom_collision = (first.y - (padel_y + padel_height)).abs() < 0.05;
-
-                if left_collision || right_collision {
-                    ball.direction.x = if left_collision { -1.0 } else { 1.0 };
-
-                    let x_diff = ball.next_location.x - first.x;
-                    ball.next_location.x -= 2.0 * x_diff;
-                }
-
-                if top_collision || bottom_collision {
-                    ball.direction.y = if top_collision { -1.0 } else { 1.0 };
-
-                    let y_diff = ball.next_location.y - first.y;
-                    ball.next_location.y -= 2.0 * y_diff;
-                }
+        for ball in &mut balls {
+            if ball.location.x < 0.0 {
+                ball.direction.x = 1.0;
+            } else if ball.location.x > 800.0 {
+                ball.direction.x = -1.0;
             }
-            None => {}
+
+            if ball.location.y < 0.0 {
+                ball.direction.y = 1.0;
+            } else if ball.location.y > 600.0 {
+                ball.direction.y = -1.0;
+                //break 'running;
+            }
+
+            ball.make_next_location();
+
+            let intersection = padel_rect.intersect_line(ball.location, ball.next_location);
+
+            match intersection {
+                Some((first, _second)) => {
+                    left_collision = (first.x - padel_x).abs() < 0.05;
+                    right_collision = (first.x - (padel_x + padel_width)).abs() < 0.05;
+                    top_collision = (first.y - padel_y).abs() < 0.05;
+                    bottom_collision = (first.y - (padel_y + padel_height)).abs() < 0.05;
+
+                    if left_collision || right_collision {
+                        ball.direction.x = if left_collision { -1.0 } else { 1.0 };
+
+                        let x_diff = ball.next_location.x - first.x;
+                        ball.next_location.x -= 2.0 * x_diff;
+                    }
+
+                    if top_collision || bottom_collision {
+                        ball.direction.y = if top_collision { -1.0 } else { 1.0 };
+
+                        let y_diff = ball.next_location.y - first.y;
+                        ball.next_location.y -= 2.0 * y_diff;
+                    }
+                }
+                None => {}
+            }
+            ball.move_to_next();
         }
-        ball.move_to_next();
 
         canvas.set_draw_color(clear_color);
         canvas.clear();
         canvas.set_draw_color(padel_color);
-        canvas.fill_frect(ball.to_rect())?;
+        for ball in &mut balls {
+            canvas.fill_frect(ball.to_rect())?;
+        }
         canvas.fill_frect(padel_rect)?;
 
         canvas.set_draw_color(Color::RED);
