@@ -19,7 +19,7 @@ fn main() -> Result<(), String> {
 
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
-    let clear_color =Color::BLACK;
+    let clear_color = Color::BLACK;
     canvas.set_draw_color(clear_color);
     canvas.clear();
     canvas.present();
@@ -35,10 +35,10 @@ fn main() -> Result<(), String> {
     let mut ball_x: f32 = 400.0;
     let mut ball_y: f32 = 300.0;
     let ball_size: f32 = 10.0;
-    let mut ball_dx : f32 = 10.0;
-    let mut ball_dy : f32 = -10.0;
+    let mut ball_dx: f32 = 10.0;
+    let mut ball_dy: f32 = -10.0;
 
-    let mut padel_rect : FRect;
+    let mut padel_rect: FRect;
 
     let mut next_ball_x;
     let mut next_ball_y;
@@ -51,12 +51,18 @@ fn main() -> Result<(), String> {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
-                Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => {
                     padel_x -= 10.0;
-                },
-                Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => {
                     padel_x += 10.0;
-                },
+                }
                 _ => {}
             }
         }
@@ -80,7 +86,8 @@ fn main() -> Result<(), String> {
 
         let intersection = padel_rect.intersect_line(
             FPoint::new(ball_x, ball_y),
-             FPoint::new(next_ball_x, next_ball_y));
+            FPoint::new(next_ball_x, next_ball_y),
+        );
 
         let mut left_collision = false;
         let mut right_collision = false;
@@ -92,7 +99,7 @@ fn main() -> Result<(), String> {
                 left_collision = (first.x - padel_x).abs() < 0.05;
                 right_collision = (first.x - (padel_x + padel_width)).abs() < 0.05;
                 top_collision = (first.y - padel_y).abs() < 0.05;
-                 bottom_collision =  (first.y - (padel_y + padel_height)).abs() < 0.05;
+                bottom_collision = (first.y - (padel_y + padel_height)).abs() < 0.05;
 
                 if left_collision || right_collision {
                     ball_dx = if left_collision { -10.0 } else { 10.0 };
@@ -107,14 +114,19 @@ fn main() -> Result<(), String> {
                     let y_diff = next_ball_y - first.y;
                     next_ball_y -= 2.0 * y_diff;
                 }
-            },
-            None => {}              
+            }
+            None => {}
         }
 
         canvas.set_draw_color(clear_color);
         canvas.clear();
         canvas.set_draw_color(padel_color);
-        canvas.fill_frect(FRect::new(next_ball_x - ball_size, next_ball_y - ball_size, ball_size * 2.0, ball_size * 2.0))?;
+        canvas.fill_frect(FRect::new(
+            next_ball_x - ball_size,
+            next_ball_y - ball_size,
+            ball_size * 2.0,
+            ball_size * 2.0,
+        ))?;
         canvas.fill_frect(padel_rect)?;
 
         canvas.set_draw_color(Color::RED);
