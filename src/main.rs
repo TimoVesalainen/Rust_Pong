@@ -82,12 +82,17 @@ fn main() -> Result<(), String> {
             FPoint::new(ball_x, ball_y),
              FPoint::new(next_ball_x, next_ball_y));
 
+        let mut left_collision = false;
+        let mut right_collision = false;
+        let mut top_collision = false;
+        let mut bottom_collision = false;
+
         match intersection {
             Some((first, _second)) => {
-                let left_collision = (first.x - padel_x).abs() < 0.05;
-                let right_collision = (first.x - (padel_x + padel_width)).abs() < 0.05;
-                let top_collision = (first.y - padel_y).abs() < 0.05;
-                let bottom_collision =  (first.y - (padel_y + padel_height)).abs() < 0.05;
+                left_collision = (first.x - padel_x).abs() < 0.05;
+                right_collision = (first.x - (padel_x + padel_width)).abs() < 0.05;
+                top_collision = (first.y - padel_y).abs() < 0.05;
+                 bottom_collision =  (first.y - (padel_y + padel_height)).abs() < 0.05;
 
                 if left_collision || right_collision {
                     ball_dx = if left_collision { -10.0 } else { 10.0 };
@@ -111,6 +116,21 @@ fn main() -> Result<(), String> {
         canvas.set_draw_color(padel_color);
         canvas.fill_frect(FRect::new(next_ball_x - ball_size, next_ball_y - ball_size, ball_size * 2.0, ball_size * 2.0))?;
         canvas.fill_frect(padel_rect)?;
+
+        canvas.set_draw_color(Color::RED);
+        if left_collision {
+            canvas.draw_fline(padel_rect.bottom_left(), padel_rect.top_left())?
+        }
+        if right_collision {
+            canvas.draw_fline(padel_rect.bottom_right(), padel_rect.top_right())?
+        }
+        if top_collision {
+            canvas.draw_fline(padel_rect.top_left(), padel_rect.top_right())?
+        }
+        if bottom_collision {
+            canvas.draw_fline(padel_rect.bottom_left(), padel_rect.bottom_right())?
+        }
+
         canvas.present();
         ball_y = next_ball_y;
         ball_x = next_ball_x;
