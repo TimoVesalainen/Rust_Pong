@@ -83,14 +83,14 @@ fn main() -> Result<(), String> {
              FPoint::new(next_ball_x, next_ball_y));
 
         match intersection {
-            Some((first, second)) => {
-                let left_collision = first.x == padel_x;
-                let right_collision = first.x == padel_x + padel_width;
-                let top_collision = first.y == padel_y;
-                let bottom_collision =  first.y == padel_y + padel_height;
+            Some((first, _second)) => {
+                let left_collision = (first.x - padel_x).abs() < 0.05;
+                let right_collision = (first.x - (padel_x + padel_width)).abs() < 0.05;
+                let top_collision = (first.y - padel_y).abs() < 0.05;
+                let bottom_collision =  (first.y - (padel_y + padel_height)).abs() < 0.05;
 
                 if left_collision || right_collision {
-                    ball_dx = if left_collision{ -10.0 } else { 10.0 };
+                    ball_dx = if left_collision { -10.0 } else { 10.0 };
 
                     let x_diff = next_ball_x - first.x;
                     next_ball_x -= 2.0 * x_diff;
