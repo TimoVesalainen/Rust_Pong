@@ -1,5 +1,6 @@
 extern crate sdl2;
 
+use core::f32;
 use rand::prelude::*;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -71,10 +72,14 @@ fn main() -> Result<(), String> {
         let y = rng.random_range(0.0..300.0);
         let speed = rng.random_range(0.5..20.0);
 
+        let angle: f32 = rng.random_range(0.0..f32::consts::TAU);
+        let (x_dir, y_dir) = angle.sin_cos();
+        let direction = FPoint::new(x_dir, y_dir);
+
         let ball = Ball {
             location: FPoint::new(x, y),
             next_location: FPoint::new(x, y),
-            direction: FPoint::new(if rng.random_bool(0.5) { 1.0 } else { -1.0 }, -1.0),
+            direction: direction,
             size: 10.0,
             speed: speed,
         };
