@@ -6,6 +6,36 @@ use sdl2::pixels::Color;
 use sdl2::rect::{FPoint, FRect};
 use std::time::Duration;
 
+#[derive(Debug, Clone)]
+struct Ball {
+    location: FPoint,
+    size: f32,
+    next_location: FPoint,
+    direction: FPoint,
+    speed: f32,
+}
+
+impl Ball {
+    fn make_next_location(&mut self) {
+        self.next_location.x = self.location.x + self.direction.x * self.speed;
+        self.next_location.y = self.location.y + self.direction.y * self.speed;
+    }
+
+    fn move_to_next(&mut self) {
+        self.location.x = self.next_location.x;
+        self.location.y = self.next_location.y;
+    }
+
+    fn to_rect(&self) -> FRect {
+        FRect::new(
+            self.location.x - self.size,
+            self.location.y - self.size,
+            self.size * 2.0,
+            self.size * 2.0,
+        )
+    }
+}
+
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -32,15 +62,13 @@ fn main() -> Result<(), String> {
     let padel_height: f32 = 10.0;
     let padel_color = Color::WHITE;
 
-    let mut ball_x: f32 = 400.0;
-    let mut ball_y: f32 = 300.0;
-    let ball_size: f32 = 10.0;
-    let mut ball_dx: f32 = 1.0;
-    let mut ball_dy: f32 = -1.0;
-    let mut ball_speed = 10;
-
-    let mut next_ball_x;
-    let mut next_ball_y;
+    let mut ball = Ball {
+        location: FPoint::new(400.0, 300.0),
+        next_location: FPoint::new(400.0, 300.0),
+        direction: FPoint::new(1.0, -1.0),
+        size: 10.0,
+        speed: 10.0,
+    };
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -66,14 +94,14 @@ fn main() -> Result<(), String> {
                     keycode: Some(Keycode::Up),
                     ..
                 } => {
-                    ball_speed += 1;
+                    ball.speed += 1.0;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Down),
                     ..
                 } => {
-                    if ball_speed > 1 {
-                        ball_speed -= 1;
+                    if ball.speed > 1.0 {
+                        ball.speed -= 1.0;
                     }
                 }
                 _ => {}
@@ -85,25 +113,21 @@ fn main() -> Result<(), String> {
         let mut bottom_collision = false;
         let padel_rect = FRect::new(padel_x, padel_y, padel_width, padel_height);
 
-        if ball_x < 0.0 {
-            ball_dx = 1.0;
-        } else if ball_x > 800.0 {
-            ball_dx = -1.0;
+        if ball.location.x < 0.0 {
+            ball.direction.x = 1.0;
+        } else if ball.location.x > 800.0 {
+            ball.direction.x = -1.0;
         }
 
-        if ball_y < 0.0 {
-            ball_dy = 1.0;
-        } else if ball_y > 600.0 {
+        if ball.location.y < 0.0 {
+            ball.direction.y = 1.0;
+        } else if ball.location.y > 600.0 {
             break 'running;
         }
 
-        next_ball_y = ball_y + ball_dy * ball_speed as f32;
-        next_ball_x = ball_x + ball_dx * ball_speed as f32;
+        ball.make_next_location();
 
-        let intersection = padel_rect.intersect_line(
-            FPoint::new(ball_x, ball_y),
-            FPoint::new(next_ball_x, next_ball_y),
-        );
+        let intersection = padel_rect.intersect_line(ball.location, ball.next_location);
 
         match intersection {
             Some((first, _second)) => {
@@ -113,33 +137,27 @@ fn main() -> Result<(), String> {
                 bottom_collision = (first.y - (padel_y + padel_height)).abs() < 0.05;
 
                 if left_collision || right_collision {
-                    ball_dx = if left_collision { -1.0 } else { 1.0 };
+                    ball.direction.x = if left_collision { -1.0 } else { 1.0 };
 
-                    let x_diff = next_ball_x - first.x;
-                    next_ball_x -= 2.0 * x_diff;
+                    let x_diff = ball.next_location.x - first.x;
+                    ball.next_location.x -= 2.0 * x_diff;
                 }
 
                 if top_collision || bottom_collision {
-                    ball_dy = if top_collision { -1.0 } else { 1.0 };
+                    ball.direction.y = if top_collision { -1.0 } else { 1.0 };
 
-                    let y_diff = next_ball_y - first.y;
-                    next_ball_y -= 2.0 * y_diff;
+                    let y_diff = ball.next_location.y - first.y;
+                    ball.next_location.y -= 2.0 * y_diff;
                 }
             }
             None => {}
         }
-        ball_y = next_ball_y;
-        ball_x = next_ball_x;
+        ball.move_to_next();
 
         canvas.set_draw_color(clear_color);
         canvas.clear();
         canvas.set_draw_color(padel_color);
-        canvas.fill_frect(FRect::new(
-            ball_x - ball_size,
-            ball_y - ball_size,
-            ball_size * 2.0,
-            ball_size * 2.0,
-        ))?;
+        canvas.fill_frect(ball.to_rect())?;
         canvas.fill_frect(padel_rect)?;
 
         canvas.set_draw_color(Color::RED);
