@@ -142,15 +142,15 @@ fn main() -> Result<(), String> {
                     top_collision = (first.y - padel_y).abs() < 0.05;
                     bottom_collision = (first.y - (padel_y + padel_height)).abs() < 0.05;
 
-                    if left_collision || right_collision {
-                        ball.direction.x = if left_collision { -1.0 } else { 1.0 };
+                    if ball_left_collision || ball_right_collision {
+                        ball.direction.x *= -1.0;
 
                         let x_diff = ball.next_location.x - first.x;
                         ball.next_location.x -= 2.0 * x_diff;
                     }
 
-                    if top_collision || bottom_collision {
-                        ball.direction.y = if top_collision { -1.0 } else { 1.0 };
+                    if ball_top_collision || ball_bottom_collision {
+                        ball.direction.y *= -1.0;
 
                         let y_diff = ball.next_location.y - first.y;
                         ball.next_location.y -= 2.0 * y_diff;
