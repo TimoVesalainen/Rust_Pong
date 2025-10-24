@@ -119,15 +119,11 @@ fn main() -> Result<(), String> {
         let padel_rect = FRect::new(padel_x, padel_y, padel_width, padel_height);
 
         for ball in &mut balls {
-            if ball.location.x < 0.0 {
-                ball.direction.x *= -1.0;
-            } else if ball.location.x > 800.0 {
+            if ball.location.x < 0.0 || ball.location.x > 800.0 {
                 ball.direction.x *= -1.0;
             }
 
-            if ball.location.y < 0.0 {
-                ball.direction.y *= -1.0;
-            } else if ball.location.y > 600.0 {
+            if ball.location.y < 0.0 || ball.location.y > 600.0 {
                 ball.direction.y *= -1.0;
             }
 
