@@ -136,11 +136,11 @@ fn main() -> Result<(), String> {
             let intersection = padel_rect.intersect_line(ball.location, ball.next_location);
 
             match intersection {
-                Some((first, _second)) => {
-                    left_collision = (first.x - padel_x).abs() < 0.05;
-                    right_collision = (first.x - (padel_x + padel_width)).abs() < 0.05;
-                    top_collision = (first.y - padel_y).abs() < 0.05;
-                    bottom_collision = (first.y - (padel_y + padel_height)).abs() < 0.05;
+                Some((first, second)) => {
+                    let ball_left_collision = (first.x - padel_x).abs() < 0.05;
+                    let ball_right_collision = (first.x - (padel_x + padel_width)).abs() < 0.05;
+                    let ball_top_collision = (first.y - padel_y).abs() < 0.05;
+                    let ball_bottom_collision = (first.y - (padel_y + padel_height)).abs() < 0.05;
 
                     if ball_left_collision || ball_right_collision {
                         ball.direction.x *= -1.0;
@@ -157,6 +157,10 @@ fn main() -> Result<(), String> {
                     }
 
                     ball.colliding = true;
+                    left_collision |= ball_left_collision;
+                    right_collision |= ball_right_collision;
+                    top_collision |= ball_top_collision;
+                    bottom_collision |= ball_bottom_collision;
                 }
                 None => ball.colliding = false,
             }
