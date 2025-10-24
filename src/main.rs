@@ -15,6 +15,7 @@ struct Ball {
     next_location: FPoint,
     direction: FPoint,
     speed: f32,
+    colliding: bool,
 }
 
 impl Ball {
@@ -83,6 +84,7 @@ fn main() -> Result<(), String> {
             direction: direction,
             size: 10.0,
             speed: speed,
+            colliding: false,
         };
         balls.push(ball);
     }
@@ -153,18 +155,25 @@ fn main() -> Result<(), String> {
                         let y_diff = ball.next_location.y - first.y;
                         ball.next_location.y -= 2.0 * y_diff;
                     }
+
+                    ball.colliding = true;
                 }
-                None => {}
+                None => ball.colliding = false,
             }
             ball.move_to_next();
         }
 
         canvas.set_draw_color(clear_color);
         canvas.clear();
-        canvas.set_draw_color(padel_color);
         for ball in &mut balls {
+            canvas.set_draw_color(if ball.colliding {
+                Color::RED
+            } else {
+                padel_color
+            });
             canvas.fill_frect(ball.to_rect())?;
         }
+        canvas.set_draw_color(padel_color);
         canvas.fill_frect(padel_rect)?;
 
         canvas.set_draw_color(Color::RED);
