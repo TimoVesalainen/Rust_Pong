@@ -64,10 +64,11 @@ fn main() -> Result<(), String> {
     let padel_height: f32 = 10.0;
     let padel_color = Color::WHITE;
 
-    let mut balls: Vec<Ball> = Vec::new();
+    let ball_count = 50;
+    let mut balls: Vec<Ball> = Vec::with_capacity(ball_count);
 
     let mut rng = rand::rng();
-    for _i in 1..1000 {
+    for _i in 1..ball_count {
         let x = rng.random_range(50.0..750.0);
         let y = rng.random_range(0.0..300.0);
         let speed = rng.random_range(0.5..20.0);
