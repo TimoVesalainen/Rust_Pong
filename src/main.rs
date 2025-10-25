@@ -41,6 +41,53 @@ impl Ball {
     }
 }
 
+fn collide(rect: &FRect, ball: &mut Ball) {
+    match rect.intersect_line(ball.location, ball.next_location) {
+        Some((first, _second)) => {
+            let ball_left_collision = ball.location.x <= rect.left() + 1.0;
+            let ball_right_collision = ball.location.x >= rect.right() - 1.0;
+            let ball_top_collision = ball.location.y <= rect.top() + 1.0;
+            let ball_bottom_collision = ball.location.y >= rect.bottom() - 1.0;
+
+            if ball_left_collision || ball_right_collision {
+                ball.speed.x *= -1.0;
+                ball.next_location.x -= 2.0 * (ball.next_location.x - first.x);
+            }
+
+            if ball_top_collision || ball_bottom_collision {
+                ball.speed.y *= -1.0;
+                ball.next_location.y -= 2.0 * (ball.next_location.y - first.y);
+            }
+
+            if !(ball_left_collision
+                || ball_right_collision
+                || ball_top_collision
+                || ball_bottom_collision)
+            {
+                panic!(
+                    "No collision {:?} {:?} {:?}",
+                    rect, ball.location, ball.next_location
+                )
+            }
+
+            ball.colliding_top = ball_bottom_collision;
+            ball.colliding_bottom = ball_top_collision;
+            ball.colliding_right = ball_left_collision;
+            ball.colliding_left = ball_right_collision;
+            /*left_collision |= ball_left_collision;
+            right_collision |= ball_right_collision;
+            top_collision |= ball_top_collision;
+            bottom_collision |= ball_bottom_collision;*/
+        }
+        None => {
+            ball.colliding_bottom = false;
+            ball.colliding_top = false;
+            ball.colliding_left = false;
+            ball.colliding_right = false;
+        }
+    }
+}
+
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -133,50 +180,7 @@ fn main() -> Result<(), String> {
 
             ball.make_next_location();
 
-            match padel_rect.intersect_line(ball.location, ball.next_location) {
-                Some((first, _second)) => {
-                    let ball_left_collision = ball.location.x <= padel_x + 1.0;
-                    let ball_right_collision = ball.location.x >= padel_x + padel_width - 1.0;
-                    let ball_top_collision = ball.location.y <= padel_y + 1.0;
-                    let ball_bottom_collision = ball.location.y >= padel_y + padel_height - 1.0;
-
-                    if ball_left_collision || ball_right_collision {
-                        ball.speed.x *= -1.0;
-                        ball.next_location.x -= 2.0 * (ball.next_location.x - first.x);
-                    }
-
-                    if ball_top_collision || ball_bottom_collision {
-                        ball.speed.y *= -1.0;
-                        ball.next_location.y -= 2.0 * (ball.next_location.y - first.y);
-                    }
-
-                    if !(ball_left_collision
-                        || ball_right_collision
-                        || ball_top_collision
-                        || ball_bottom_collision)
-                    {
-                        panic!(
-                            "No collision {:?} {:?} {:?}",
-                            padel_rect, ball.location, ball.next_location
-                        )
-                    }
-
-                    ball.colliding_top = ball_bottom_collision;
-                    ball.colliding_bottom = ball_top_collision;
-                    ball.colliding_right = ball_left_collision;
-                    ball.colliding_left = ball_right_collision;
-                    left_collision |= ball_left_collision;
-                    right_collision |= ball_right_collision;
-                    top_collision |= ball_top_collision;
-                    bottom_collision |= ball_bottom_collision;
-                }
-                None => {
-                    ball.colliding_bottom = false;
-                    ball.colliding_top = false;
-                    ball.colliding_left = false;
-                    ball.colliding_right = false;
-                }
-            }
+            collide(&padel_rect, ball);
             ball.move_to_next();
         }
 
