@@ -37,13 +37,35 @@ impl Ball {
     }
 }
 
-fn collide(rect: &FRect, ball: &mut Ball) {
-    match rect.intersect_line(ball.location, ball.next_location) {
+#[derive(Debug, Clone)]
+struct Rectangle {
+    rectangle: FRect,
+    next_rectangle: FRect,
+    speed: FPoint,
+}
+
+impl Rectangle {
+    fn make_next_location(&mut self) {
+        self.next_rectangle.x = self.rectangle.x + self.speed.x;
+        self.next_rectangle.y = self.rectangle.y + self.speed.y;
+    }
+
+    fn move_to_next(&mut self) {
+        self.rectangle.x = self.next_rectangle.x;
+        self.rectangle.y = self.next_rectangle.y;
+    }
+}
+
+fn collide(rect: &Rectangle, ball: &mut Ball) {
+    match rect
+        .next_rectangle
+        .intersect_line(ball.location, ball.next_location)
+    {
         Some((first, _second)) => {
-            let ball_left_collision = ball.location.x <= rect.left() + 1.0;
-            let ball_right_collision = ball.location.x >= rect.right() - 1.0;
-            let ball_top_collision = ball.location.y <= rect.top() + 1.0;
-            let ball_bottom_collision = ball.location.y >= rect.bottom() - 1.0;
+            let ball_left_collision = ball.location.x <= rect.next_rectangle.left() + 1.0;
+            let ball_right_collision = ball.location.x >= rect.next_rectangle.right() - 1.0;
+            let ball_top_collision = ball.location.y <= rect.next_rectangle.top() + 1.0;
+            let ball_bottom_collision = ball.location.y >= rect.next_rectangle.bottom() - 1.0;
 
             if ball_left_collision || ball_right_collision {
                 ball.speed.x *= -1.0;
@@ -89,7 +111,7 @@ fn main() -> Result<(), String> {
     canvas.present();
     let mut event_pump = sdl_context.event_pump()?;
 
-    let mut padel_x: f32 = 0.0;
+    let padel_x: f32 = 0.0;
     let padel_width: f32 = 100.0;
 
     let padel_y: f32 = 500.0;
@@ -98,6 +120,11 @@ fn main() -> Result<(), String> {
 
     let ball_count = 1;
     let mut balls: Vec<Ball> = Vec::with_capacity(ball_count);
+    let mut padel = Rectangle {
+        rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
+        next_rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
+        speed: FPoint::new(0.0, 0.0),
+    };
 
     let mut rng = rand::rng();
     for _i in 0..ball_count {
@@ -119,6 +146,7 @@ fn main() -> Result<(), String> {
     }
 
     'running: loop {
+        padel.speed = FPoint::new(0.0, 0.0);
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -130,19 +158,19 @@ fn main() -> Result<(), String> {
                     keycode: Some(Keycode::Left),
                     ..
                 } => {
-                    padel_x -= 10.0;
+                    padel.speed.x = -10.0;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Right),
                     ..
                 } => {
-                    padel_x += 10.0;
+                    padel.speed.x = 10.0;
                 }
                 _ => {}
             }
         }
-        let padel_rect = FRect::new(padel_x, padel_y, padel_width, padel_height);
 
+        padel.make_next_location();
         for ball in &mut balls {
             if ball.location.x < 0.0 || ball.location.x > 800.0 {
                 ball.speed.x *= -1.0;
@@ -154,10 +182,10 @@ fn main() -> Result<(), String> {
 
             ball.make_next_location();
 
-            collide(&padel_rect, ball);
+            collide(&padel, ball);
             ball.move_to_next();
         }
-
+        padel.move_to_next();
         canvas.set_draw_color(clear_color);
         canvas.clear();
         canvas.set_draw_color(padel_color);
@@ -166,7 +194,7 @@ fn main() -> Result<(), String> {
             canvas.fill_frect(ball_rect)?;
         }
         canvas.set_draw_color(padel_color);
-        canvas.fill_frect(padel_rect)?;
+        canvas.fill_frect(padel.rectangle)?;
         canvas.present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
     }
