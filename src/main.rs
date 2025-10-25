@@ -166,7 +166,7 @@ impl Game {
         return true;
     }
 
-    fn update(&mut self) {
+    fn update(&mut self, time_delta: Duration) {
         self.padel.make_next_location();
         for ball in &mut self.balls {
             if ball.location.x < 0.0 || ball.location.x > 800.0 {
@@ -185,7 +185,7 @@ impl Game {
         self.padel.move_to_next();
     }
 
-    fn draw(&mut self, canvas: &mut Canvas<Window>) -> Result<(), String> {
+    fn draw(&mut self, canvas: &mut Canvas<Window>, time_delta: Duration) -> Result<(), String> {
         canvas.set_draw_color(CLEAR_COLOR);
         canvas.clear();
         canvas.set_draw_color(PADEL_COLOR);
@@ -220,15 +220,26 @@ fn main() -> Result<(), String> {
 
     let mut game = Game::init(2);
 
-    let fps = 60;
+    let mut last_update_start = Instant::now();
+    let mut last_draw_start = Instant::now();
+
+    let fps = 120;
     let default_frame_length = Duration::from_nanos(1_000_000_000u64 / fps);
     'running: loop {
         let frame_start = Instant::now();
         if !game.handle_events(&mut event_pump) {
             break 'running;
         }
-        game.update();
-        game.draw(&mut canvas)?;
+        let update_start = Instant::now();
+        game.update(update_start - last_update_start);
+        last_update_start = update_start;
+        let update_length = update_start - frame_start;
+
+        if update_length > default_frame_length {
+            let draw_start = Instant::now();
+            game.draw(&mut canvas, draw_start - last_draw_start)?;
+            last_draw_start = draw_start;
+        }
 
         let frame_end = Instant::now();
         let frame_length = frame_end - frame_start;
