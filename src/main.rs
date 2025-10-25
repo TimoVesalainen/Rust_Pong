@@ -90,20 +90,20 @@ fn main() -> Result<(), String> {
     let mut event_pump = sdl_context.event_pump()?;
 
     let mut padel_x: f32 = 0.0;
-    let padel_width: f32 = 800.0;
+    let padel_width: f32 = 100.0;
 
     let padel_y: f32 = 500.0;
     let padel_height: f32 = 10.0;
     let padel_color = Color::WHITE;
 
-    let ball_count = 50;
+    let ball_count = 1;
     let mut balls: Vec<Ball> = Vec::with_capacity(ball_count);
 
     let mut rng = rand::rng();
-    for _i in 1..ball_count {
+    for _i in 0..ball_count {
         let x = rng.random_range(50.0..750.0);
         let y = rng.random_range(0.0..300.0);
-        let speed = rng.random_range(0.5..20.0);
+        let speed = rng.random_range(0.5..10.0);
 
         let angle: f32 = rng.random_range(0.0..f32::consts::TAU);
         let (x_dir, y_dir) = angle.sin_cos();
