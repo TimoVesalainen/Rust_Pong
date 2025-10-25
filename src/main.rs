@@ -13,8 +13,7 @@ struct Ball {
     location: FPoint,
     size: f32,
     next_location: FPoint,
-    direction: FPoint,
-    speed: f32,
+    speed: FPoint,
     colliding_left: bool,
     colliding_right: bool,
     colliding_top: bool,
@@ -23,8 +22,8 @@ struct Ball {
 
 impl Ball {
     fn make_next_location(&mut self) {
-        self.next_location.x = self.location.x + self.direction.x * self.speed;
-        self.next_location.y = self.location.y + self.direction.y * self.speed;
+        self.next_location.x = self.location.x + self.speed.x;
+        self.next_location.y = self.location.y + self.speed.y;
     }
 
     fn move_to_next(&mut self) {
@@ -84,9 +83,8 @@ fn main() -> Result<(), String> {
         let ball = Ball {
             location: FPoint::new(x, y),
             next_location: FPoint::new(x, y),
-            direction: direction,
+            speed: direction * speed,
             size: 10.0,
-            speed: speed,
             colliding_top: false,
             colliding_bottom: false,
             colliding_left: false,
@@ -126,11 +124,11 @@ fn main() -> Result<(), String> {
 
         for ball in &mut balls {
             if ball.location.x < 0.0 || ball.location.x > 800.0 {
-                ball.direction.x *= -1.0;
+                ball.speed.x *= -1.0;
             }
 
             if ball.location.y < 0.0 || ball.location.y > 600.0 {
-                ball.direction.y *= -1.0;
+                ball.speed.y *= -1.0;
             }
 
             ball.make_next_location();
@@ -143,12 +141,12 @@ fn main() -> Result<(), String> {
                     let ball_bottom_collision = (first.y - (padel_y + padel_height)).abs() <= 1.0;
 
                     if ball_left_collision || ball_right_collision {
-                        ball.direction.x *= -1.0;
+                        ball.speed.x *= -1.0;
                         ball.next_location.x -= 2.0 * (ball.next_location.x - first.x);
                     }
 
                     if ball_top_collision || ball_bottom_collision {
-                        ball.direction.y *= -1.0;
+                        ball.speed.y *= -1.0;
                         ball.next_location.y -= 2.0 * (ball.next_location.y - first.y);
                     }
 
