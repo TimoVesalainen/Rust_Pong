@@ -135,10 +135,10 @@ fn main() -> Result<(), String> {
 
             match padel_rect.intersect_line(ball.location, ball.next_location) {
                 Some((first, _second)) => {
-                    let ball_left_collision = (first.x - padel_x).abs() <= 1.0;
-                    let ball_right_collision = (first.x - (padel_x + padel_width)).abs() <= 1.0;
-                    let ball_top_collision = (first.y - padel_y).abs() <= 1.0;
-                    let ball_bottom_collision = (first.y - (padel_y + padel_height)).abs() <= 1.0;
+                    let ball_left_collision = ball.location.x <= padel_x + 1.0;
+                    let ball_right_collision = ball.location.x >= padel_x + padel_width - 1.0;
+                    let ball_top_collision = ball.location.y <= padel_y + 1.0;
+                    let ball_bottom_collision = ball.location.y >= padel_y + padel_height - 1.0;
 
                     if ball_left_collision || ball_right_collision {
                         ball.speed.x *= -1.0;
