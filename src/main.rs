@@ -2,10 +2,13 @@ extern crate sdl2;
 
 use core::{f32, panic};
 use rand::prelude::*;
+use sdl2::EventPump;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::{FPoint, FRect};
+use sdl2::render::Canvas;
+use sdl2::video::Window;
 use std::time::Duration;
 
 #[derive(Debug, Clone)]
@@ -92,6 +95,99 @@ fn collide(rect: &Rectangle, ball: &mut Ball) {
     }
 }
 
+struct Game {
+    balls: Vec<Ball>,
+    padel: Rectangle,
+}
+
+impl Game {
+    fn init(&mut self, ball_count: usize) {
+        let mut rng = rand::rng();
+        for _i in 0..ball_count {
+            let x = rng.random_range(50.0..750.0);
+            let y = rng.random_range(0.0..300.0);
+            let speed = rng.random_range(0.5..10.0);
+
+            let angle: f32 = rng.random_range(0.0..f32::consts::TAU);
+            let (x_dir, y_dir) = angle.sin_cos();
+            let direction = FPoint::new(x_dir, y_dir);
+
+            let ball = Ball {
+                location: FPoint::new(x, y),
+                next_location: FPoint::new(x, y),
+                speed: direction * speed,
+                size: 10.0,
+            };
+            self.balls.push(ball);
+        }
+    }
+
+    fn handle_events(&mut self, event_pump: &mut EventPump) -> bool {
+        self.padel.speed = FPoint::new(0.0, 0.0);
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => {
+                    return false;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => {
+                    self.padel.speed.x = -10.0;
+                }
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => {
+                    self.padel.speed.x = 10.0;
+                }
+                _ => {}
+            }
+        }
+        return true;
+    }
+
+    fn update(&mut self) {
+        self.padel.make_next_location();
+        for ball in &mut self.balls {
+            if ball.location.x < 0.0 || ball.location.x > 800.0 {
+                ball.speed.x *= -1.0;
+            }
+
+            if ball.location.y < 0.0 || ball.location.y > 600.0 {
+                ball.speed.y *= -1.0;
+            }
+
+            ball.make_next_location();
+
+            collide(&self.padel, ball);
+            ball.move_to_next();
+        }
+        self.padel.move_to_next();
+    }
+
+    fn draw(&mut self, canvas: &mut Canvas<Window>) -> Result<(), String> {
+        canvas.set_draw_color(CLEAR_COLOR);
+        canvas.clear();
+        canvas.set_draw_color(PADEL_COLOR);
+        for ball in &mut self.balls {
+            let ball_rect = ball.to_rect();
+            canvas.fill_frect(ball_rect)?;
+        }
+        canvas.set_draw_color(PADEL_COLOR);
+        canvas.fill_frect(self.padel.rectangle)?;
+        canvas.present();
+        Ok(())
+    }
+}
+
+static PADEL_COLOR: Color = Color::WHITE;
+static CLEAR_COLOR: Color = Color::BLACK;
+
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -105,10 +201,9 @@ fn main() -> Result<(), String> {
 
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
-    let clear_color = Color::BLACK;
-    canvas.set_draw_color(clear_color);
+    /*     canvas.set_draw_color(clear_color);
     canvas.clear();
-    canvas.present();
+    canvas.present();*/
     let mut event_pump = sdl_context.event_pump()?;
 
     let padel_x: f32 = 0.0;
@@ -116,86 +211,24 @@ fn main() -> Result<(), String> {
 
     let padel_y: f32 = 500.0;
     let padel_height: f32 = 10.0;
-    let padel_color = Color::WHITE;
 
     let ball_count = 1;
-    let mut balls: Vec<Ball> = Vec::with_capacity(ball_count);
-    let mut padel = Rectangle {
-        rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
-        next_rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
-        speed: FPoint::new(0.0, 0.0),
+    let mut game = Game {
+        balls: Vec::with_capacity(ball_count),
+        padel: Rectangle {
+            rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
+            next_rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
+            speed: FPoint::new(0.0, 0.0),
+        },
     };
-
-    let mut rng = rand::rng();
-    for _i in 0..ball_count {
-        let x = rng.random_range(50.0..750.0);
-        let y = rng.random_range(0.0..300.0);
-        let speed = rng.random_range(0.5..10.0);
-
-        let angle: f32 = rng.random_range(0.0..f32::consts::TAU);
-        let (x_dir, y_dir) = angle.sin_cos();
-        let direction = FPoint::new(x_dir, y_dir);
-
-        let ball = Ball {
-            location: FPoint::new(x, y),
-            next_location: FPoint::new(x, y),
-            speed: direction * speed,
-            size: 10.0,
-        };
-        balls.push(ball);
-    }
+    game.init(ball_count);
 
     'running: loop {
-        padel.speed = FPoint::new(0.0, 0.0);
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => break 'running,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Left),
-                    ..
-                } => {
-                    padel.speed.x = -10.0;
-                }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Right),
-                    ..
-                } => {
-                    padel.speed.x = 10.0;
-                }
-                _ => {}
-            }
+        if !game.handle_events(&mut event_pump) {
+            break 'running;
         }
-
-        padel.make_next_location();
-        for ball in &mut balls {
-            if ball.location.x < 0.0 || ball.location.x > 800.0 {
-                ball.speed.x *= -1.0;
-            }
-
-            if ball.location.y < 0.0 || ball.location.y > 600.0 {
-                ball.speed.y *= -1.0;
-            }
-
-            ball.make_next_location();
-
-            collide(&padel, ball);
-            ball.move_to_next();
-        }
-        padel.move_to_next();
-        canvas.set_draw_color(clear_color);
-        canvas.clear();
-        canvas.set_draw_color(padel_color);
-        for ball in &mut balls {
-            let ball_rect = ball.to_rect();
-            canvas.fill_frect(ball_rect)?;
-        }
-        canvas.set_draw_color(padel_color);
-        canvas.fill_frect(padel.rectangle)?;
-        canvas.present();
+        game.update();
+        game.draw(&mut canvas)?;
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
     }
 
