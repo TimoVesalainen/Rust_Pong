@@ -1,6 +1,6 @@
 extern crate sdl2;
 
-use core::f32;
+use core::{f32, panic};
 use rand::prelude::*;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -148,6 +148,17 @@ fn main() -> Result<(), String> {
                     if ball_top_collision || ball_bottom_collision {
                         ball.speed.y *= -1.0;
                         ball.next_location.y -= 2.0 * (ball.next_location.y - first.y);
+                    }
+
+                    if !(ball_left_collision
+                        || ball_right_collision
+                        || ball_top_collision
+                        || ball_bottom_collision)
+                    {
+                        panic!(
+                            "No collision {:?} {:?} {:?}",
+                            padel_rect, ball.location, ball.next_location
+                        )
                     }
 
                     ball.colliding_top = ball_bottom_collision;
