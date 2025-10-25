@@ -9,7 +9,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::{FPoint, FRect};
 use sdl2::render::Canvas;
 use sdl2::video::Window;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
 struct Ball {
@@ -216,20 +216,25 @@ fn main() -> Result<(), String> {
 
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
-    /*     canvas.set_draw_color(clear_color);
-    canvas.clear();
-    canvas.present();*/
     let mut event_pump = sdl_context.event_pump()?;
 
     let mut game = Game::init(2);
 
+    let fps = 60;
+    let default_frame_length = Duration::from_nanos(1_000_000_000u64 / fps);
     'running: loop {
+        let frame_start = Instant::now();
         if !game.handle_events(&mut event_pump) {
             break 'running;
         }
         game.update();
         game.draw(&mut canvas)?;
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
+
+        let frame_end = Instant::now();
+        let frame_length = frame_end - frame_start;
+        if frame_length < default_frame_length {
+            ::std::thread::sleep(default_frame_length - frame_length);
+        }
     }
 
     Ok(())
