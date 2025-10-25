@@ -101,7 +101,21 @@ struct Game {
 }
 
 impl Game {
-    fn init(&mut self, ball_count: usize) {
+    fn init(ball_count: usize) -> Game {
+        let padel_x: f32 = 0.0;
+        let padel_width: f32 = 100.0;
+
+        let padel_y: f32 = 500.0;
+        let padel_height: f32 = 10.0;
+
+        let mut game = Game {
+            balls: Vec::with_capacity(ball_count),
+            padel: Rectangle {
+                rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
+                next_rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
+                speed: FPoint::new(0.0, 0.0),
+            },
+        };
         let mut rng = rand::rng();
         for _i in 0..ball_count {
             let x = rng.random_range(50.0..750.0);
@@ -118,8 +132,9 @@ impl Game {
                 speed: direction * speed,
                 size: 10.0,
             };
-            self.balls.push(ball);
+            game.balls.push(ball);
         }
+        return game;
     }
 
     fn handle_events(&mut self, event_pump: &mut EventPump) -> bool {
@@ -206,22 +221,7 @@ fn main() -> Result<(), String> {
     canvas.present();*/
     let mut event_pump = sdl_context.event_pump()?;
 
-    let padel_x: f32 = 0.0;
-    let padel_width: f32 = 100.0;
-
-    let padel_y: f32 = 500.0;
-    let padel_height: f32 = 10.0;
-
-    let ball_count = 1;
-    let mut game = Game {
-        balls: Vec::with_capacity(ball_count),
-        padel: Rectangle {
-            rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
-            next_rectangle: FRect::new(padel_x, padel_y, padel_width, padel_height),
-            speed: FPoint::new(0.0, 0.0),
-        },
-    };
-    game.init(ball_count);
+    let mut game = Game::init(2);
 
     'running: loop {
         if !game.handle_events(&mut event_pump) {
