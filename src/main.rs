@@ -166,7 +166,7 @@ impl Game {
         return true;
     }
 
-    fn update(&mut self, time_delta: Duration) {
+    fn update(&mut self, time_delta: Duration) -> Result<(), String> {
         self.padel.make_next_location();
         for ball in &mut self.balls {
             if ball.location.x < 0.0 || ball.location.x > 800.0 {
@@ -183,6 +183,7 @@ impl Game {
             ball.move_to_next();
         }
         self.padel.move_to_next();
+        Ok(())
     }
 
     fn draw(&mut self, canvas: &mut Canvas<Window>, time_delta: Duration) -> Result<(), String> {
@@ -231,7 +232,7 @@ fn main() -> Result<(), String> {
             break 'running;
         }
         let update_start = Instant::now();
-        game.update(update_start - last_update_start);
+        game.update(update_start - last_update_start)?;
         last_update_start = update_start;
         let update_length = update_start - frame_start;
 
