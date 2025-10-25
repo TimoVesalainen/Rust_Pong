@@ -14,10 +14,6 @@ struct Ball {
     size: f32,
     next_location: FPoint,
     speed: FPoint,
-    colliding_left: bool,
-    colliding_right: bool,
-    colliding_top: bool,
-    colliding_bottom: bool,
 }
 
 impl Ball {
@@ -69,22 +65,8 @@ fn collide(rect: &FRect, ball: &mut Ball) {
                     rect, ball.location, ball.next_location
                 )
             }
-
-            ball.colliding_top = ball_bottom_collision;
-            ball.colliding_bottom = ball_top_collision;
-            ball.colliding_right = ball_left_collision;
-            ball.colliding_left = ball_right_collision;
-            /*left_collision |= ball_left_collision;
-            right_collision |= ball_right_collision;
-            top_collision |= ball_top_collision;
-            bottom_collision |= ball_bottom_collision;*/
         }
-        None => {
-            ball.colliding_bottom = false;
-            ball.colliding_top = false;
-            ball.colliding_left = false;
-            ball.colliding_right = false;
-        }
+        None => {}
     }
 }
 
@@ -132,10 +114,6 @@ fn main() -> Result<(), String> {
             next_location: FPoint::new(x, y),
             speed: direction * speed,
             size: 10.0,
-            colliding_top: false,
-            colliding_bottom: false,
-            colliding_left: false,
-            colliding_right: false,
         };
         balls.push(ball);
     }
@@ -163,10 +141,6 @@ fn main() -> Result<(), String> {
                 _ => {}
             }
         }
-        let mut left_collision = false;
-        let mut right_collision = false;
-        let mut top_collision = false;
-        let mut bottom_collision = false;
         let padel_rect = FRect::new(padel_x, padel_y, padel_width, padel_height);
 
         for ball in &mut balls {
@@ -186,41 +160,13 @@ fn main() -> Result<(), String> {
 
         canvas.set_draw_color(clear_color);
         canvas.clear();
+        canvas.set_draw_color(padel_color);
         for ball in &mut balls {
-            canvas.set_draw_color(padel_color);
             let ball_rect = ball.to_rect();
             canvas.fill_frect(ball_rect)?;
-            canvas.set_draw_color(Color::RED);
-            if ball.colliding_bottom {
-                canvas.draw_fline(ball_rect.bottom_left(), ball_rect.bottom_right())?;
-            }
-            if ball.colliding_top {
-                canvas.draw_fline(ball_rect.top_left(), ball_rect.top_right())?;
-            }
-            if ball.colliding_left {
-                canvas.draw_fline(ball_rect.bottom_left(), ball_rect.top_left())?;
-            }
-            if ball.colliding_right {
-                canvas.draw_fline(ball_rect.top_right(), ball_rect.bottom_right())?;
-            }
         }
         canvas.set_draw_color(padel_color);
         canvas.fill_frect(padel_rect)?;
-
-        canvas.set_draw_color(Color::RED);
-        if left_collision {
-            canvas.draw_fline(padel_rect.bottom_left(), padel_rect.top_left())?
-        }
-        if right_collision {
-            canvas.draw_fline(padel_rect.bottom_right(), padel_rect.top_right())?
-        }
-        if top_collision {
-            canvas.draw_fline(padel_rect.top_left(), padel_rect.top_right())?
-        }
-        if bottom_collision {
-            canvas.draw_fline(padel_rect.bottom_left(), padel_rect.bottom_right())?
-        }
-
         canvas.present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
     }
