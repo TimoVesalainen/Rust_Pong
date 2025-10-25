@@ -144,16 +144,12 @@ fn main() -> Result<(), String> {
 
                     if ball_left_collision || ball_right_collision {
                         ball.direction.x *= -1.0;
-
-                        let x_diff = ball.next_location.x - first.x;
-                        ball.next_location.x -= 2.0 * x_diff;
+                        ball.next_location.x -= 2.0 * (ball.next_location.x - first.x);
                     }
 
                     if ball_top_collision || ball_bottom_collision {
                         ball.direction.y *= -1.0;
-
-                        let y_diff = ball.next_location.y - first.y;
-                        ball.next_location.y -= 2.0 * y_diff;
+                        ball.next_location.y -= 2.0 * (ball.next_location.y - first.y);
                     }
 
                     ball.colliding_top = ball_bottom_collision;
