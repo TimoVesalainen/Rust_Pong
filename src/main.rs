@@ -99,6 +99,11 @@ struct Game {
     padel: Rectangle,
 }
 
+static PADEL_COLOR: Color = Color::WHITE;
+static CLEAR_COLOR: Color = Color::BLACK;
+static SCREEN_WIDTH: u32 = 800;
+static SCREEN_HEIGHT: u32 = 600;
+
 impl Game {
     fn init(ball_count: usize) -> Game {
         let padel_x: f32 = 0.0;
@@ -168,11 +173,11 @@ impl Game {
     fn update(&mut self, time_delta: Duration) -> Result<(), String> {
         self.padel.make_next_location(time_delta);
         for ball in &mut self.balls {
-            if ball.location.x < 0.0 || ball.location.x > 800.0 {
+            if ball.location.x < 0.0 || ball.location.x > SCREEN_WIDTH as f32 {
                 ball.speed.x *= -1.0;
             }
 
-            if ball.location.y < 0.0 || ball.location.y > 600.0 {
+            if ball.location.y < 0.0 || ball.location.y > SCREEN_HEIGHT as f32 {
                 ball.speed.y *= -1.0;
             }
 
@@ -200,15 +205,12 @@ impl Game {
     }
 }
 
-static PADEL_COLOR: Color = Color::WHITE;
-static CLEAR_COLOR: Color = Color::BLACK;
-
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
     let window = video_subsystem
-        .window("Pong", 800, 600)
+        .window("Pong", SCREEN_WIDTH, SCREEN_HEIGHT)
         .position_centered()
         .opengl()
         .build()
