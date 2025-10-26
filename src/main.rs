@@ -235,8 +235,10 @@ fn main() -> Result<(), String> {
         last_update_start = update_start;
 
         let draw_start = Instant::now();
-        game.draw(&mut canvas, draw_start - last_draw_start)?;
-        last_draw_start = draw_start;
+        if draw_start - frame_start < default_frame_length {
+            game.draw(&mut canvas, draw_start - last_draw_start)?;
+            last_draw_start = draw_start;
+        }
 
         let frame_end = Instant::now();
         let frame_length = frame_end - frame_start;
