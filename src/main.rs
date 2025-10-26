@@ -20,9 +20,8 @@ struct Ball {
 }
 
 impl Ball {
-    fn make_next_location(&mut self) {
-        self.next_location.x = self.location.x + self.speed.x;
-        self.next_location.y = self.location.y + self.speed.y;
+    fn make_next_location(&mut self, time_delta: Duration) {
+        self.next_location = self.location + self.speed * time_delta.as_secs_f32();
     }
 
     fn move_to_next(&mut self) {
@@ -48,9 +47,9 @@ struct Rectangle {
 }
 
 impl Rectangle {
-    fn make_next_location(&mut self) {
-        self.next_rectangle.x = self.rectangle.x + self.speed.x;
-        self.next_rectangle.y = self.rectangle.y + self.speed.y;
+    fn make_next_location(&mut self, time_delta: Duration) {
+        self.next_rectangle.x = self.rectangle.x + self.speed.x * time_delta.as_secs_f32();
+        self.next_rectangle.y = self.rectangle.y + self.speed.y * time_delta.as_secs_f32();
     }
 
     fn move_to_next(&mut self) {
@@ -120,7 +119,7 @@ impl Game {
         for _i in 0..ball_count {
             let x = rng.random_range(50.0..750.0);
             let y = rng.random_range(0.0..300.0);
-            let speed = rng.random_range(0.5..10.0);
+            let speed = rng.random_range(40.0..800.0);
 
             let angle: f32 = rng.random_range(0.0..f32::consts::TAU);
             let (x_dir, y_dir) = angle.sin_cos();
@@ -152,13 +151,13 @@ impl Game {
                     keycode: Some(Keycode::Left),
                     ..
                 } => {
-                    self.padel.speed.x = -10.0;
+                    self.padel.speed.x = -800.0;
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Right),
                     ..
                 } => {
-                    self.padel.speed.x = 10.0;
+                    self.padel.speed.x = 800.0;
                 }
                 _ => {}
             }
@@ -167,7 +166,7 @@ impl Game {
     }
 
     fn update(&mut self, time_delta: Duration) -> Result<(), String> {
-        self.padel.make_next_location();
+        self.padel.make_next_location(time_delta);
         for ball in &mut self.balls {
             if ball.location.x < 0.0 || ball.location.x > 800.0 {
                 ball.speed.x *= -1.0;
@@ -177,7 +176,7 @@ impl Game {
                 ball.speed.y *= -1.0;
             }
 
-            ball.make_next_location();
+            ball.make_next_location(time_delta);
 
             collide(&self.padel, ball);
             ball.move_to_next();
