@@ -225,10 +225,10 @@ fn main() -> Result<(), String> {
 
     let fps = 120;
     let default_frame_length = Duration::from_nanos(1_000_000_000u64 / fps);
-    'running: loop {
+    loop {
         let frame_start = Instant::now();
         if !game.handle_events(&mut event_pump) {
-            break 'running;
+            break;
         }
         let update_start = Instant::now();
         game.update(update_start - last_update_start)?;
